@@ -1,26 +1,66 @@
 const BOARD_SIZE = 9;
 let grid_size = 1;
+let board;
+let currentMatch;
 
-function setup(){
-  define_grid_size();
-  createCanvas(BOARD_SIZE * grid_size, BOARD_SIZE * grid_size);
-}
+//let mouseDown = false;
 
-function draw(){
-  background(2);
-  draw_grid();
-  if (mouseIsPressed) {
-    draw_grid_square(Math.floor(mouseX / grid_size),
-      Math.floor(mouseY / grid_size));
+function setup() {
+  defineGridSize();
+  board = createCanvas(BOARD_SIZE * grid_size, BOARD_SIZE * grid_size);
+  board.mousePressed(mouseDown);
+  board.mouseReleased(mouseUp);
+  currentMatch = new Match();
+  palette = {
+    background: 10,
+    playerOne: color(113, 5, 136),
+    playerTwo: color(37, 105, 255)
   }
 }
 
-function windowResized(){
-  define_grid_size();
-  createCanvas(BOARD_SIZE * grid_size, BOARD_SIZE * grid_size);
+function draw(){
+  background(palette.background);
+  drawGrid();
+  currentMatch.update();
+  // if (mouseDown) {
+  //   drawGridSquare(mouseX, mouseY, palette.playerOne);
+  //   //console.log("mouse down at " + mouseX + ", " + mouseY + " of "+ width + ", " + height);
+  // }
+}
+//
+var Match = function() {
+  this.players = ["playerOne", "playerTwo"];
+  this.currentPlayer = 0;
+  this.turnComplete = true;
 }
 
-function define_grid_size(){
+Match.prototype.update = function() {
+  if (!currentMatch.turnComplete) {
+    let currentPlayer = currentMatch.getCurrentPlayer();
+    console.log(currentPlayer);
+    drawGridSquare(mouseX, mouseY, palette[currentPlayer]);
+  }
+}
+
+Match.prototype.getCurrentPlayer = function() {
+  return this.players[this.currentPlayer]
+}
+
+function mouseDown() {
+  currentMatch.turnComplete = false;
+}
+
+function mouseUp(){
+  currentMatch.turnComplete = true;
+  currentMatch.currentPlayer = (currentMatch.currentPlayer == 0) ? 1 : 0;
+}
+//
+// function windowResized(){
+//   defineGridSize();
+//   createCanvas(BOARD_SIZE * grid_size, BOARD_SIZE * grid_size);
+// }
+//
+function defineGridSize(){
   if (windowWidth < windowHeight) {
     grid_size = windowWidth / BOARD_SIZE;
   }
@@ -28,21 +68,26 @@ function define_grid_size(){
     grid_size = windowHeight / BOARD_SIZE;
   }
 }
-
-function draw_grid(){
+//
+function drawGrid(){
   for (let row = 0; row <= BOARD_SIZE; row++){
     for (let column = 0; column <= BOARD_SIZE; column ++){
-        draw_grid_corner(row * grid_size, column * grid_size);
+        drawGridCorner(row * grid_size, column * grid_size);
     }
   }
 }
 
-function draw_grid_corner(x, y){
+function drawGridCorner(x, y){
   fill(40);
   circle(x,y, grid_size/4);
 }
 
-function draw_grid_square(row, column, color = 50){
+function drawGridSquare(x, y, color = 50){
+  let cell = coordToCell(x, y);
   fill(color);
-  square(row * grid_size, column * grid_size, grid_size);
+  square(cell.row * grid_size, cell.column * grid_size, grid_size);
+}
+
+function coordToCell(x, y){
+  return {row: Math.floor(x / grid_size ), column: Math.floor(y / grid_size)};
 }
