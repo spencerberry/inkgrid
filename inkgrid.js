@@ -3,8 +3,6 @@ let grid_size = 1;
 let board;
 let currentMatch;
 
-//let mouseDown = false;
-
 function setup() {
   defineGridSize();
   board = createCanvas(BOARD_SIZE * grid_size, BOARD_SIZE * grid_size);
@@ -22,12 +20,8 @@ function draw(){
   background(palette.background);
   drawGrid();
   currentMatch.update();
-  // if (mouseDown) {
-  //   drawGridSquare(mouseX, mouseY, palette.playerOne);
-  //   //console.log("mouse down at " + mouseX + ", " + mouseY + " of "+ width + ", " + height);
-  // }
+
 }
-//
 var Match = function() {
   this.players = ["playerOne", "playerTwo"];
   this.currentPlayer = 0;
@@ -37,7 +31,6 @@ var Match = function() {
 Match.prototype.update = function() {
   if (!currentMatch.turnComplete) {
     let currentPlayer = currentMatch.getCurrentPlayer();
-    console.log(currentPlayer);
     drawGridSquare(mouseX, mouseY, palette[currentPlayer]);
   }
 }
@@ -54,12 +47,12 @@ function mouseUp(){
   currentMatch.turnComplete = true;
   currentMatch.currentPlayer = (currentMatch.currentPlayer == 0) ? 1 : 0;
 }
-//
-// function windowResized(){
-//   defineGridSize();
-//   createCanvas(BOARD_SIZE * grid_size, BOARD_SIZE * grid_size);
-// }
-//
+
+function windowResized(){
+  defineGridSize();
+  createCanvas(BOARD_SIZE * grid_size, BOARD_SIZE * grid_size);
+}
+
 function defineGridSize(){
   if (windowWidth < windowHeight) {
     grid_size = windowWidth / BOARD_SIZE;
@@ -68,7 +61,7 @@ function defineGridSize(){
     grid_size = windowHeight / BOARD_SIZE;
   }
 }
-//
+
 function drawGrid(){
   for (let row = 0; row <= BOARD_SIZE; row++){
     for (let column = 0; column <= BOARD_SIZE; column ++){
