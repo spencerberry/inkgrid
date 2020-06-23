@@ -1,4 +1,4 @@
-const BOARD_SIZE = 9;
+const BOARD_SIZE = 20;
 
 let gridSize;
 let halfGridSize;
@@ -76,6 +76,7 @@ Match.prototype.update = function() {
     let new_territory = new Cell(current_cell.column, current_cell.row, palette[currentPlayer]);
     this.territory.push(new_territory);
     currentMatch.turnComplete = false;
+    currentMatch.currentPlayer = (currentMatch.currentPlayer == 0) ? 1 : 0;
   }
   for (cell of this.territory){
     drawGridSquare(cell, cell.color);
@@ -94,7 +95,6 @@ function mouseDown() {
 function mouseUp(){
   currentMatch.turnComplete = true;
   currentMatch.turnInProgress = false;
-  currentMatch.currentPlayer = (currentMatch.currentPlayer == 0) ? 1 : 0;
 }
 
 function windowResized(){
