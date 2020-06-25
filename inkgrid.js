@@ -1,4 +1,4 @@
-const BOARD_SIZE = 20;
+const BOARD_SIZE = 13;
 
 let gridSize;
 let halfGridSize;
@@ -22,21 +22,23 @@ function setup() {
     playerOne: color(113, 5, 136),
     playerTwo: color(37, 105, 255)
   }
-  p1 = new Player({row: 4, column: 8}, 'One', palette.playerOne);
+  p1 = new Player({row: Math.floor(Math.random()*BOARD_SIZE), column: BOARD_SIZE-1}, 'One', palette.playerOne);
 }
 
 function draw(){
   background(palette.background);
   drawGrid();
   drawOutline();
-  p1.draw();
+  //p1.draw();
   currentMatch.update();
 }
 
-var Cell = function(column, row, color) {
-  this.column = column;
-  this.row = row;
-  this.color = color;
+class Cell {
+  constructor(column, row, color){
+    this.column = column;
+    this.row = row;
+    this.color = color;
+   }
 }
 
 var Player = function(cell, name, color){
@@ -73,8 +75,8 @@ Match.prototype.update = function() {
   else if (currentMatch.turnComplete){
     let current_cell = coordToCell(mouseX, mouseY)
     let currentPlayer = currentMatch.getCurrentPlayer();
-    let new_territory = new Cell(current_cell.column, current_cell.row, palette[currentPlayer]);
-    this.territory.push(new_territory);
+    let newCell = new Cell(current_cell.column, current_cell.row, palette[currentPlayer]);
+    this.addCellToTerritory(newCell);
     currentMatch.turnComplete = false;
     currentMatch.currentPlayer = (currentMatch.currentPlayer == 0) ? 1 : 0;
   }
@@ -95,6 +97,24 @@ function mouseDown() {
 function mouseUp(){
   currentMatch.turnComplete = true;
   currentMatch.turnInProgress = false;
+}
+
+Match.prototype.addCellToTerritory = function(cell) {
+  let existingCell = this.getCellfromTerritory(cell);
+  if (existingCell) {
+    this.territory[this.territory.indexOf(existingCell)] = cell
+  }
+  else{
+    this.territory.push(cell);
+  }
+}
+Match.prototype.getCellfromTerritory = function(cell){
+  for (currentCell of this.territory) {
+    if (cell.row == currentCell.row && cell.column == currentCell.column) {
+      return currentCell;
+    }
+  }
+  return false;
 }
 
 function windowResized(){
@@ -118,12 +138,12 @@ function defineGridSize(){
 function drawGrid(){
   for (let row = 0; row <= BOARD_SIZE; row++){
     for (let column = 0; column <= BOARD_SIZE; column ++){
-        drawGridCorner(row * gridSize, column * gridSize);
+        drawGridIntersection(column * gridSize, row * gridSize);
     }
   }
 }
 
-function drawGridCorner(x, y){
+function drawGridIntersection(x, y){
   fill(palette.neutral);
   noStroke();
   circle(x,y, eighthGridSize);
