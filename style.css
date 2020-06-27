@@ -1,9 +1,31 @@
 body{
+  display: flex;
+  color: #efe;
+  justify-content: center;
   margin: 0;
   background-color: #050010;
+}
+
+small {
+  font-size: .5rem;
 }
 
 canvas{
   margin: auto;
   display: block;
+}
+
+#preboard,
+#postboard{
+  margin: 0 1em;
+  flex-grow: 1;
+}
+
+#board {
+  font-size: 0;
+}
+
+#postboard{
+  text-align: center;
+  align-self: flex-end;
 }

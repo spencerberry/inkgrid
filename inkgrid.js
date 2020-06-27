@@ -13,6 +13,7 @@ let p1
 function setup() {
   defineGridSize();
   boardCanvas = createCanvas(BOARD_SIZE * gridSize, BOARD_SIZE * gridSize);
+  boardCanvas.parent("board");
   boardCanvas.mousePressed(mouseDown);
   boardCanvas.mouseReleased(mouseUp);
   currentMatch = new Match();
@@ -119,7 +120,9 @@ function mouseUp(){
 ////// SCALING \\\\\\
 function windowResized(){
   defineGridSize();
-  createCanvas(BOARD_SIZE * gridSize, BOARD_SIZE * gridSize);
+  let boardCanvas = createCanvas(BOARD_SIZE * gridSize, BOARD_SIZE * gridSize);
+  boardCanvas.parent("board");
+
 }
 
 function defineGridSize(){
