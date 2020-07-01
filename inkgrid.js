@@ -7,8 +7,8 @@ const BOARD_SIZE = 13;
 // let sixteenthGridSize;
 let boardCanvas;
 let currentMatch;
-let p1
 
+let palette
 
 function setup() {
   defineGridSize();
@@ -17,7 +17,6 @@ function setup() {
   boardCanvas.mousePressed(mouseDown);
   boardCanvas.mouseReleased(mouseUp);
   currentMatch = new Match();
-
   palette = {
     background: 0,
     neutral: 30,
@@ -25,7 +24,6 @@ function setup() {
     playerTwo: color(37, 105, 255)
   }
 
-  p1 = new Player({column: Math.floor(Math.random()*BOARD_SIZE), row: BOARD_SIZE-1}, 'One', palette.playerOne);
 }
 
 function draw(){
@@ -34,34 +32,43 @@ function draw(){
   drawOutline();
   currentMatch.update();
   currentMatch.draw();
-  p1.draw();
 }
 
-////// CELL \\\\\\
-class Cell {
-  constructor(column, row, color) {
+////// POSITION \\\\\\
+class Position {
+  constructor(column = 0, row = 0) {
     this.column = column;
     this.row = row;
+  }
+}
+////// CELL \\\\\\
+class Cell {
+  constructor(position = new Position(), color) {
+    this.position = position;
     this.color = color;
    }
 }
 
 ////// PLAYER \\\\\\
 class Player {
-  constructor(cell, name, color) {
-    this.position = cell;
+  constructor(name, color, position = new Position()) {
     this.name = name;
     this.color = color;
+    this.position = position;
   }
   draw() {
-    drawPlayer(this.position, this.color)
+    let top_left = { x: this.position.row * gridSize, y: this.position.column * gridSize};
+    strokeWeight(sixteenthGridSize);
+    stroke(color(10));
+    fill(this.color);
+    quad(top_left.x + halfGridSize, top_left.y, top_left.x + gridSize, top_left.y + halfGridSize, top_left.x + halfGridSize, top_left.y + gridSize, top_left.x, top_left.y + halfGridSize);
   }
 }
 
 ////// MATCH \\\\\\
 class Match {
   constructor() {
-    this.players = [];
+    this.players = [new Player('bandaid', color(113, 5, 136), new Position(8,8))];
     this.currentTurnIndex = 0;
     this.currentPlayer;
     this.turnComplete = true;
@@ -85,6 +92,9 @@ class Match {
   draw(){
     for (let cell of this.territory){
       drawGridSquare(cell, cell.color);
+    }
+    for (let player of this.players){
+      player.draw();
     }
   }
   addCellToTerritory(cell) {
@@ -122,7 +132,6 @@ function windowResized(){
   defineGridSize();
   let boardCanvas = createCanvas(BOARD_SIZE * gridSize, BOARD_SIZE * gridSize);
   boardCanvas.parent("board");
-
 }
 
 function defineGridSize(){
@@ -177,12 +186,4 @@ function drawGridSquare(cell, color = 50){
   fill(color);
   noStroke();
   square(cell.column * gridSize, cell.row * gridSize, gridSize);
-}
-
-function drawPlayer(cell, color){
-  let top_left = { x: cell.row * gridSize, y: cell.column * gridSize};
-  strokeWeight(sixteenthGridSize);
-  stroke(palette.neutral);
-  fill(color);
-  quad(top_left.x + halfGridSize, top_left.y, top_left.x + gridSize, top_left.y + halfGridSize, top_left.x + halfGridSize, top_left.y + gridSize, top_left.x, top_left.y + halfGridSize);
 }

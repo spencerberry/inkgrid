@@ -1,5 +1,10 @@
+:root{
+  --current-player: #00ff00;
+}
 body{
   display: flex;
+  flex-wrap: wrap;
+
   color: #efe;
   justify-content: center;
   margin: 0;
@@ -15,8 +20,7 @@ canvas{
   display: block;
 }
 
-#preboard,
-#postboard{
+#info {
   margin: 0 1em;
   flex-grow: 1;
 }
