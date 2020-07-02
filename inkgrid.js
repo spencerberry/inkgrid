@@ -9,13 +9,31 @@ let boardCanvas;
 let currentMatch;
 
 let palette
+let Grid = {
+  size: {
+    full: 16,
+    half: 8,
+    quarter: 4,
+    eight: 2,
+    sixteenth: 1
+    },
+  coordToPosition: function(x, y){
+    let position = new Position(Math.floor(x / gridSize), Math.floor(y / gridSize ));
+    return position;
+  },
+  get size() {
+    return this.size.full;
+  }
+}
 
 function setup() {
+  //noCursor();
   defineGridSize();
   boardCanvas = createCanvas(BOARD_SIZE * gridSize, BOARD_SIZE * gridSize);
   boardCanvas.parent("board");
   boardCanvas.mousePressed(mouseDown);
   boardCanvas.mouseReleased(mouseUp);
+  boardCanvas.mouseClicked(boardClicked);
   currentMatch = new Match();
   palette = {
     background: 0,
@@ -33,6 +51,11 @@ function draw(){
   currentMatch.update();
   currentMatch.draw();
 }
+
+// function mouseClicked(event){
+//   currentMatch.tryTurn();
+//   console.log(event);
+// }
 
 ////// POSITION \\\\\\
 class Position {
@@ -57,37 +80,45 @@ class Player {
     this.position = position;
   }
   draw() {
-    let top_left = { x: this.position.row * gridSize, y: this.position.column * gridSize};
+    let top_left = { x: this.position.column * gridSize, y: this.position.row * gridSize};
     strokeWeight(sixteenthGridSize);
     stroke(color(10));
     fill(this.color);
     quad(top_left.x + halfGridSize, top_left.y, top_left.x + gridSize, top_left.y + halfGridSize, top_left.x + halfGridSize, top_left.y + gridSize, top_left.x, top_left.y + halfGridSize);
+  }
+  canMove() {
+    return true;
+  }
+  moveTo(position) {
+    this.position = position;
   }
 }
 
 ////// MATCH \\\\\\
 class Match {
   constructor() {
-    this.players = [new Player('bandaid', color(113, 5, 136), new Position(8,8))];
-    this.currentTurnIndex = 0;
+    this.players = [
+      new Player('bandaid', color(113, 5, 136), new Position(0,8)),
+      new Player('ointment', color(37, 105, 255), new Position(0,0))];
+    this.turnCount = 0;
     this.currentPlayer;
     this.turnComplete = true;
     this.territory = [];
   }
   update() {
-    this.currentPlayer = this.players[this.currentTurnIndex % this.players.length];
+    this.currentPlayer = this.players[this.turnCount % this.players.length];
 
-    if (this.turnInProgress) {
-      drawGridSquare(coordToCell(mouseX, mouseY), palette[this.currentPlayer]);
-    }
-    else if (this.turnComplete){
-      let current_cell = coordToCell(mouseX, mouseY)
-      let currentPlayer = this.CurrentPlayer;
-      let newCell = new Cell(current_cell.column, current_cell.row, palette[currentPlayer]);
-      this.addCellToTerritory(newCell);
-      this.turnComplete = false;
-      this.currentPlayer = (currentMatch.currentPlayer == 0) ? 1 : 0;
-    }
+    // if (this.turnInProgress) {
+    //   drawGridSquare(Grid.coordToPosition(mouseX, mouseY), palette[this.currentPlayer]);
+    // }
+    // else if (this.turnComplete){
+    //   let current_cell = Grid.coordToPosition(mouseX, mouseY)
+    //   let currentPlayer = this.CurrentPlayer;
+    //   let newCell = new Cell(current_cell.column, current_cell.row, palette[currentPlayer]);
+    //   this.addCellToTerritory(newCell);
+    //   this.turnComplete = false;
+    //   this.currentPlayer = (currentMatch.currentPlayer == 0) ? 1 : 0;
+    // }
   }
   draw(){
     for (let cell of this.territory){
@@ -95,6 +126,13 @@ class Match {
     }
     for (let player of this.players){
       player.draw();
+    }
+  }
+  tryTurn(){
+    let currentPosition = Grid.coordToPosition(mouseX, mouseY);
+    if ( currentMatch.currentPlayer.canMove(currentPosition) ) {
+      currentMatch.currentPlayer.moveTo(currentPosition);
+      currentMatch.turnCount++;
     }
   }
   addCellToTerritory(cell) {
@@ -126,6 +164,10 @@ function mouseUp(){
   currentMatch.turnInProgress = false;
 }
 
+function boardClicked(){
+  currentMatch.tryTurn();
+}
+
 
 ////// SCALING \\\\\\
 function windowResized(){
@@ -147,9 +189,7 @@ function defineGridSize(){
   sixteenthGridSize = gridSize / 16;
 }
 
-function coordToCell(x, y){
-  return {row: Math.floor(y / gridSize ), column: Math.floor(x / gridSize)};
-}
+
 
 //////  DRAWING \\\\\\
 
@@ -175,7 +215,7 @@ function drawOutline() {
 }
 
 function drawGridOutline(x, y, color = 50){
-  let cell = coordToCell(x, y);
+  let cell = Grid.coordToPosition(x, y);
   noFill();
   stroke(color);
   strokeWeight(gridSize/16);
