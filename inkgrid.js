@@ -78,6 +78,7 @@ class Player {
     this.name = name;
     this.color = color;
     this.position = position;
+    this.speed = 2;
   }
   draw() {
     let top_left = { x: this.position.column * gridSize, y: this.position.row * gridSize};
@@ -86,8 +87,14 @@ class Player {
     fill(this.color);
     quad(top_left.x + halfGridSize, top_left.y, top_left.x + gridSize, top_left.y + halfGridSize, top_left.x + halfGridSize, top_left.y + gridSize, top_left.x, top_left.y + halfGridSize);
   }
-  canMove() {
-    return true;
+  canMove(position) {
+    let columnDistance = position.column - this.position.column;
+    let rowDistance = position.row - this.position.row;
+    console.log(Math.abs(columnDistance) + Math.abs(rowDistance));
+    if (Math.abs(columnDistance) + Math.abs(rowDistance) <= this.speed){
+      return true;
+    }
+    return false;
   }
   moveTo(position) {
     this.position = position;
@@ -98,7 +105,7 @@ class Player {
 class Match {
   constructor() {
     this.players = [
-      new Player('bandaid', color(113, 5, 136), new Position(0,8)),
+      new Player('bandaid', color(113, 5, 136), new Position(8,8)),
       new Player('ointment', color(37, 105, 255), new Position(0,0))];
     this.turnCount = 0;
     this.currentPlayer;
@@ -122,21 +129,24 @@ class Match {
   }
   draw(){
     for (let cell of this.territory){
-      drawGridSquare(cell, cell.color);
+      drawGridSquare(cell.position, cell.color);
     }
     for (let player of this.players){
       player.draw();
     }
   }
   tryTurn(){
-    let currentPosition = Grid.coordToPosition(mouseX, mouseY);
-    if ( currentMatch.currentPlayer.canMove(currentPosition) ) {
-      currentMatch.currentPlayer.moveTo(currentPosition);
+    let currentPlayer = currentMatch.currentPlayer
+    let cursorPosition = Grid.coordToPosition(mouseX, mouseY);
+    if ( currentMatch.currentPlayer.canMove(cursorPosition) ) {
+      currentMatch.inkTerritory(new Cell(currentPlayer.position, currentPlayer.color) );
+      currentPlayer.moveTo(cursorPosition);
+      currentMatch.inkTerritory(new Cell(currentPlayer.position, currentPlayer.color) );
       currentMatch.turnCount++;
     }
   }
-  addCellToTerritory(cell) {
-    let existingCell = this.getCellfromTerritory(cell);
+  inkTerritory(cell) {
+    let existingCell = this.getCellfromTerritory(cell.position);
     if (existingCell) {
       this.territory[this.territory.indexOf(existingCell)] = cell
     }
@@ -144,9 +154,9 @@ class Match {
       this.territory.push(cell);
     }
   }
-  getCellfromTerritory(cell){
+  getCellfromTerritory(position){
     for (let currentCell of this.territory) {
-      if (cell.row == currentCell.row && cell.column == currentCell.column) {
+      if (position.row == currentCell.row && position.column == currentCell.column) {
         return currentCell;
       }
     }
@@ -208,8 +218,12 @@ function drawGridIntersection(x, y){
 }
 
 function drawOutline() {
+  let turnColor = palette.neutral;
+  if (currentMatch.currentPlayer) {
+    turnColor = currentMatch.currentPlayer.color;
+  }
   noFill();
-  stroke(palette.neutral);
+  stroke(turnColor);
   strokeWeight(eighthGridSize);
   square(0,0, gridSize * BOARD_SIZE);
 }
