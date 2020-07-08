@@ -111,56 +111,88 @@ class Turf {
   draw() {};
 }
 
-class Matrix {
-  constructor(width, height, element = (x, y) => undefined) {
-    this.width = width;
-    this.height = height;
+class Board {
+  constructor(size, color = (column, row) => undefined) {
+    this.size = size;
     this.content = [];
 
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        this.content[y * width + x] = element(x, y);
+    for (let row = 0; row < size; row++) {
+      for (let column = 0; column < size; column++) {
+        this.content[row * size + column] = color(column, row);
       }
     }
   }
-  get(x, y) {
-  return this.content[y * this.width + x];}
-
-  set(x, y, value) {
-    this.content[y * this.width + x] = value;
+  get(row, column) {
+    return this.content[row * this.size + column];
   }
-}
-
-
-class Territory{
-  constructor(boardSize){
-    this.turf = []
-    for (let i = 0; i < boardSize; i++){
-      this.turf[i]=[]
-        for (let j = 0; j < boardSize; j++){
-          this.turf[i][j];
-      }
-    }
-  }
-  contentsAt(position) {
-    return this.turf[position.column][position.row];
-  }
-  ink(position, value) {
-    //console.log(position, value);
-    this.turf[position.column][position.row] = value;
+  set(row, column, color) {
+    this.content[row * this.size + column] = color;
   }
 
   draw() {
-    for (let column = 0; column < this.turf.length; column++){
-      for ( let row = 0; row < this.turf[column].length; row++){
-        let color = this.turf[column][row];
-        if (color != undefined){
-          drawGridSquare(new Position(column, row), color);
-        }
+    for (let {column, row, color} of this){
+      if (color) {
+        drawGridSquare(column, row, color)
       }
     }
   }
+  [Symbol.iterator]() {
+    return new BoardIterator(this);
+  }
 }
+
+class BoardIterator {
+  constructor(board) {
+    this.column = 0;
+    this.row = 0;
+    this.board = board;
+  }
+
+  next() {
+    if (this.row == this.board.size) return {done: true};
+
+    let value = {
+      column: this.column,
+      row: this.row,
+      color: this.board.get(this.column, this.row)};
+    this.column++;
+    if (this.column == this.board.size) {
+      this.column = 0;
+      this.row++;
+    }
+    return {value, done: false};
+  }
+}
+
+//
+// class Territory{
+//   constructor(boardSize){
+//     this.turf = []
+//     for (let i = 0; i < boardSize; i++){
+//       this.turf[i]=[]
+//         for (let j = 0; j < boardSize; j++){
+//           this.turf[i][j];
+//       }
+//     }
+//   }
+//   contentsAt(position) {
+//     return this.turf[position.column][position.row];
+//   }
+//   ink(position, value) {
+//     this.turf[position.column][position.row] = value;
+//   }
+//
+//   draw() {
+//     for (let column = 0; column < this.turf.length; column++){
+//       for ( let row = 0; row < this.turf[column].length; row++){
+//         let color = this.turf[column][row];
+//         if (color != undefined){
+//           drawGridSquare(new Position(column, row), color);
+//         }
+//       }
+//     }
+//   }
+// }
 
 
 ////// MATCH \\\\\\
@@ -171,7 +203,7 @@ class Match {
       new Player('ointment', color(37, 105, 255), new Position(0,0))];
     this.turnCount = 0;
     //this.currentPlayer;
-    this.territory = new Territory(boardSize);
+    this.board = new Board(boardSize);
   }
 
   get currentPlayerIndex(){
@@ -182,21 +214,9 @@ class Match {
   }
 
   update() {
-
-    // if (this.turnInProgress) {
-    //   drawGridSquare(Grid.coordToPosition(mouseX, mouseY), palette[this.currentPlayer]);
-    // }
-    // else if (this.turnComplete){
-    //   let current_cell = Grid.coordToPosition(mouseX, mouseY)
-    //   let currentPlayer = this.CurrentPlayer;
-    //   let newCell = new Cell(current_cell.column, current_cell.row, palette[currentPlayer]);
-    //   this.addCellToTerritory(newCell);
-    //   this.turnComplete = false;
-    //   this.currentPlayer = (currentMatch.currentPlayer == 0) ? 1 : 0;
-    // }
   }
   draw(){
-    this.territory.draw();
+    this.board.draw();
     for (let player of this.players){
       player.draw();
 //      player.turf.draw();
@@ -206,27 +226,11 @@ class Match {
     let cursorPosition = Grid.coordToPosition(mouseX, mouseY);
     if (this.currentPlayer.canMove(cursorPosition) ) {
       this.currentPlayer.moveTo(cursorPosition);
-      this.territory.ink(this.currentPlayer.position, this.currentPlayer.color);
+      this.board.set(this.currentPlayer.position.column, this.currentPlayer.position.row, this.currentPlayer.color);
       this.turnCount++;
     }
   }
-  // inkTerritory(position, value) {
-  //   let existingCell = this.getCellfromTerritory(position);
-  //   if (existingCell) {
-  //     this.territory[this.territory.indexOf(existingCell)] = value;
-  //   }
-  //   else{
-  //     this.territory.push(value)
-  //   }
-  // }
-  // getCellfromTerritory(position){
-  //   for (let currentCell of this.territory.turf) {
-  //     if (position.row == currentCell.row && position.column == currentCell.column) {
-  //       return currentCell;
-  //     }
-  //   }
-  //   return false;
-  // }
+
 }
 ////// INPUT \\\\\\
 function mouseDown() {
@@ -242,7 +246,6 @@ function mouseUp(){
 function boardClicked(){
   currentMatch.tryTurn();
 }
-
 
 ////// SCALING \\\\\\
 function windowResized(){
@@ -263,8 +266,6 @@ function defineGridSize(){
   eighthGridSize = gridSize / 8;
   sixteenthGridSize = gridSize / 16;
 }
-
-
 
 //////  DRAWING \\\\\\
 
@@ -301,8 +302,8 @@ function drawGridOutline(x, y, color = 50){
   square(cell.row * gridSize, cell.column * gridSize, gridSize);
 }
 
-function drawGridSquare(position, color = 50){
+function drawGridSquare(column, row, color = 50){
   fill(color);
   noStroke();
-  square(position.column * gridSize, position.row * gridSize, gridSize);
+  square(column * gridSize, row * gridSize, gridSize);
 }
