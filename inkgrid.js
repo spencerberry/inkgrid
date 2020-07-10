@@ -129,7 +129,9 @@ class Board {
     return this.content[row * this.size + column];
   }
   set(row, column, color) {
-    this.content[row * this.size + column] = color;
+    if (row >= 0 && row < this.size && column >= 0 && column < this.size){
+      this.content[row * this.size + column] = color;
+    }
   }
 
   draw() {
@@ -228,8 +230,8 @@ class Match {
     let cursorPosition = Grid.coordToPosition(mouseX, mouseY);
     if (this.currentPlayer.column == cursorPosition.column && this.currentPlayer.row == cursorPosition.row ){
       let color = this.currentPlayer.color;
-      let column = this.currentPlayer.column;
-      let row = this.currentPlayer.row;
+      let playerColumn = this.currentPlayer.column;
+      let playerRow = this.currentPlayer.row;
       let diamond = [
         {column: 0, row: -2},
         {column: -1, row: -1},
@@ -246,7 +248,9 @@ class Match {
         {column: 0, row: 2}
       ]
       for (let cell of diamond){
-        this.board.set(column + cell.column, row + cell.row, color);
+        let column = playerColumn + cell.column;
+        let row = playerRow + cell.row;
+        this.board.set(column, row, color);
       }
     }
     else if (this.currentPlayer.canMove(cursorPosition.column, cursorPosition.row) ) {
