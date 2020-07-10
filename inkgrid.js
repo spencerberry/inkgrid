@@ -1,6 +1,5 @@
 const BOARD_SIZE = 13;
 
-// let gridSize;
 // let halfGridSize;
 // let quarterGridSize;
 // let eighthGridSize;
@@ -8,7 +7,7 @@ const BOARD_SIZE = 13;
 let boardCanvas;
 let currentMatch;
 
-let palette
+let palette;
 let Grid = {
   size: {
     full: 16,
@@ -18,21 +17,19 @@ let Grid = {
     sixteenth: 1
     },
   coordToPosition: function(x, y){
-    let position = new Position(Math.floor(x / gridSize), Math.floor(y / gridSize ));
-    return position;
-  },
-  get size() {
-    return this.size.full;
+    let column = Math.floor(x / gridSize);
+    let row = Math.floor(y / gridSize );
+    return { column, row };
   }
 }
 
 function setup() {
-  //noCursor();
+  noCursor();
   defineGridSize();
   boardCanvas = createCanvas(BOARD_SIZE * gridSize, BOARD_SIZE * gridSize);
   boardCanvas.parent("board");
-  boardCanvas.mousePressed(mouseDown);
-  boardCanvas.mouseReleased(mouseUp);
+  // boardCanvas.mousePressed(mouseDown);
+  // boardCanvas.mouseReleased(mouseUp);
   boardCanvas.mouseClicked(boardClicked);
   currentMatch = new Match(BOARD_SIZE);
   palette = {
@@ -41,13 +38,13 @@ function setup() {
     playerOne: color(113, 5, 136),
     playerTwo: color(37, 105, 255)
   }
-
 }
 
 function draw(){
   background(palette.background);
   drawGrid();
   drawOutline();
+  drawCursorHighlight();
   currentMatch.update();
   currentMatch.draw();
 }
@@ -58,12 +55,12 @@ function draw(){
 // }
 
 ////// POSITION \\\\\\
-class Position {
-  constructor(column = 0, row = 0) {
-    this.column = column;
-    this.row = row;
-  }
-}
+// class Position {
+//   constructor(column = 0, row = 0) {
+//     this.column = column;
+//     this.row = row;
+//   }
+// }
 // ////// CELL \\\\\\
 // class Cell {
 //   constructor(position = new Position(), color) {
@@ -74,29 +71,35 @@ class Position {
 
 ////// PLAYER \\\\\\
 class Player {
-  constructor(name, color, position = new Position()) {
+  constructor(name, color, column, row) {
     this.name = name;
     this.color = color;
-    this.position = position;
+    this.column = column;
+    this.row = row;
     this.speed = 2;
+    this.range = 4;
   }
   draw() {
-    let top_left = { x: this.position.column * gridSize, y: this.position.row * gridSize};
+    let top_left = { x: this.column * gridSize, y: this.row * gridSize};
     strokeWeight(sixteenthGridSize);
     stroke(color(10));
     fill(this.color);
     quad(top_left.x + halfGridSize, top_left.y, top_left.x + gridSize, top_left.y + halfGridSize, top_left.x + halfGridSize, top_left.y + gridSize, top_left.x, top_left.y + halfGridSize);
   }
-  canMove(position) {
-    let columnDistance = position.column - this.position.column;
-    let rowDistance = position.row - this.position.row;
+  canMove(column, row) {
+    let columnDistance = column - this.column;
+    let rowDistance = row - this.row;
     if (Math.abs(columnDistance) + Math.abs(rowDistance) <= this.speed){
       return true;
     }
     return false;
   }
-  moveTo(position) {
-    this.position = position;
+  moveTo(column, row) {
+    this.column = column;
+    this.row = row;
+  }
+  pop(){
+    //for {}
   }
 }
 
@@ -199,8 +202,8 @@ class BoardIterator {
 class Match {
   constructor(boardSize) {
     this.players = [
-      new Player('bandaid', color(113, 5, 136), new Position(boardSize-1,boardSize-1)),
-      new Player('ointment', color(37, 105, 255), new Position(0,0))];
+      new Player('bandaid', color(113, 5, 136), 1, 1),
+      new Player('ointment', color(37, 105, 255), boardSize-2, boardSize - 2)];
     this.turnCount = 0;
     //this.currentPlayer;
     this.board = new Board(boardSize);
@@ -219,29 +222,51 @@ class Match {
     this.board.draw();
     for (let player of this.players){
       player.draw();
-//      player.turf.draw();
     }
   }
   tryTurn(){
     let cursorPosition = Grid.coordToPosition(mouseX, mouseY);
-    if (this.currentPlayer.canMove(cursorPosition) ) {
-      this.currentPlayer.moveTo(cursorPosition);
-      this.board.set(this.currentPlayer.position.column, this.currentPlayer.position.row, this.currentPlayer.color);
+    if (this.currentPlayer.column == cursorPosition.column && this.currentPlayer.row == cursorPosition.row ){
+      let color = this.currentPlayer.color;
+      let column = this.currentPlayer.column;
+      let row = this.currentPlayer.row;
+      let diamond = [
+        {column: 0, row: -2},
+        {column: -1, row: -1},
+        {column: 0, row: -1},
+        {column: 1, row: -1},
+        {column: -2, row: 0},
+        {column: -1, row: 0},
+        {column: 0, row: 0},
+        {column: 1, row: 0},
+        {column: 2, row: 0},
+        {column: -1, row: 1},
+        {column: 0, row: 1},
+        {column: 1, row: 1},
+        {column: 0, row: 2}
+      ]
+      for (let cell of diamond){
+        this.board.set(column + cell.column, row + cell.row, color);
+      }
+    }
+    else if (this.currentPlayer.canMove(cursorPosition.column, cursorPosition.row) ) {
+      this.currentPlayer.moveTo(cursorPosition.column, cursorPosition.row);
+      this.board.set(this.currentPlayer.column, this.currentPlayer.row, this.currentPlayer.color);
       this.turnCount++;
     }
   }
 
 }
 ////// INPUT \\\\\\
-function mouseDown() {
-  currentMatch.turnComplete = false;
-  currentMatch.turnInProgress = true;
-}
-
-function mouseUp(){
-  currentMatch.turnComplete = true;
-  currentMatch.turnInProgress = false;
-}
+// function mouseDown() {
+//   currentMatch.turnComplete = false;
+//   currentMatch.turnInProgress = true;
+// }
+//
+// function mouseUp(){
+//   currentMatch.turnComplete = true;
+//   currentMatch.turnInProgress = false;
+// }
 
 function boardClicked(){
   currentMatch.tryTurn();
@@ -299,11 +324,16 @@ function drawGridOutline(x, y, color = 50){
   noFill();
   stroke(color);
   strokeWeight(gridSize/16);
-  square(cell.row * gridSize, cell.column * gridSize, gridSize);
+  square(cell.column * gridSize, cell.row * gridSize, gridSize);
 }
 
 function drawGridSquare(column, row, color = 50){
   fill(color);
   noStroke();
   square(column * gridSize, row * gridSize, gridSize);
+}
+
+function drawCursorHighlight(){
+  let color = currentMatch.currentPlayer.color;
+  drawGridOutline(mouseX, mouseY, color);
 }
