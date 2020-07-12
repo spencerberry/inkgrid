@@ -139,15 +139,15 @@ class Board {
       }
     }
   }
-  get(row, column) {
+  get(column, row) {
     return this.content[row * this.size + column];
   }
-  set(row, column, color) {
+  set(column, row, color) {
     if (row >= 0 && row < this.size && column >= 0 && column < this.size) {
       this.content[row * this.size + column] = color;
       for (let player of currentMatch.players) {
         if (player != currentMatch.currentPlayer && row == player.row && column == player.column) {
-          currentMatch.gameOver;
+          currentMatch.gameOver = true;
           console.log(currentMatch.currentPlayer.name, " wins!");
         }
       }
@@ -199,8 +199,8 @@ class BoardIterator {
 class Match {
   constructor(boardSize) {
     this.players = [
-      new Player('bandaid', color(113, 5, 136), 1, 1),
-      new Player('ointment', color(37, 105, 255), boardSize-2, boardSize - 2)];
+      new Player('purple', color(113, 5, 136), 1, 1),
+      new Player('blue', color(37, 105, 255), boardSize-2, boardSize - 2)];
     this.turnCount = 0;
     //this.currentPlayer;
     this.board = new Board(boardSize);
