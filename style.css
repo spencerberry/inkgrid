@@ -1,14 +1,20 @@
 :root{
   --current-player: #00ff00;
+  --dark: #444;
 }
 body{
   display: flex;
   flex-wrap: wrap;
-
   color: #efe;
   justify-content: center;
   margin: 0;
   background-color: #050010;
+}
+
+h1, h2 {
+  margin-top: 0;
+  margin-bottom: .5rem;
+  border-bottom: .2rem solid var(--dark);
 }
 
 small {
@@ -20,10 +26,42 @@ canvas{
   display: block;
 }
 
+ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+ul li {
+  padding: .2rem 0;
+  border-bottom:  .1rem solid var(--dark);
+}
+
 #info {
+  display: flex;
+  flex-direction: column;
   margin: 0 1em;
   flex-grow: 1;
+  flex-basis: 200px;
 }
+
+.rules {
+  font-size: .8em;
+  height: 100%;
+  margin: 0;
+}
+
+.footnotes {
+  flex-grow: 1;
+  font-size: .6em;
+  color: var(--dark);
+}
+
+.footnotes li {
+}
+
+
+
+
 
 #board {
   font-size: 0;

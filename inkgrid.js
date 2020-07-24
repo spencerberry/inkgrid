@@ -1,9 +1,5 @@
 const BOARD_SIZE = 9;
 
-// let grid.halfSize;
-// let quarterGridSize;
-// let grid.eighthSize;
-// let grid.sixteenthSize;
 let boardCanvas;
 let currentMatch;
 let grid;
@@ -55,7 +51,6 @@ function draw(){
   background(palette.background);
   drawGrid();
   drawOutline();
-  currentMatch.update();
   currentMatch.draw();
   drawCursorHighlight();
 
@@ -63,14 +58,37 @@ function draw(){
 
 ////// PLAYER \\\\\\
 class Player {
-  constructor(name, color, column, row) {
+  constructor(name, color, board, column, row) {
     this.name = name;
     this.color = color;
+    this.board = board;
     this.column = column;
     this.row = row;
-    this.speed = 2;
+    this.speed = 4;
+    this.swimSpeed = 3;
     this.range = 4;
   }
+
+  drawMoves(moves){
+    for (let move of moves){
+      let fill = color(10);
+      fill.setAlpha(125);
+      for (let step of move){
+        drawGridSquare(step.column, step.row, fill);
+      }
+    }
+  }
+
+  possibleMoves(){
+    let moves = [];
+    moves[0] = [{column: 0, row: 0}, {column: 1, row: 0}, {column: 2, row: 0}],
+      [{column: 0, row: 0}, {column: 1, row: 0}, {column: 2, row: 0}];
+    let depth = this.speed + this.swimSpeed;
+    for (let move = {depth: 1}; move.depth <= depth; move.depth++){
+    }
+    return moves;
+  }
+
   draw() {
     let top_left = { x: this.column * grid.size, y: this.row * grid.size};
     strokeWeight(grid.sixteenthSize);
@@ -78,7 +96,9 @@ class Player {
     this.color.setAlpha(255);
     fill(this.color);
     quad(top_left.x + grid.halfSize, top_left.y, top_left.x + grid.size, top_left.y + grid.halfSize, top_left.x + grid.halfSize, top_left.y + grid.size, top_left.x, top_left.y + grid.halfSize);
+    //this.drawMoves(this.possibleMoves());
   }
+
   canMove(column, row) {
     let columnDistance = column - this.column;
     let rowDistance = row - this.row;
@@ -117,16 +137,16 @@ class Player {
   }
 }
 
-class Turf {
-  constructor(){
-    this._turf = ['a','b'];
-
-  }
-  get this(){
-    return this._turf
-  }
-  draw() {};
-}
+// class Turf {
+//   constructor(){
+//     this._turf = ['a','b'];
+//
+//   }
+//   get this(){
+//     return this._turf
+//   }
+//   draw() {};
+// }
 
 class Board {
   constructor(size, color = (column, row) => undefined) {
@@ -198,12 +218,11 @@ class BoardIterator {
 ////// MATCH \\\\\\
 class Match {
   constructor(boardSize) {
-    this.players = [
-      new Player('purple', color(113, 5, 136), 1, 1),
-      new Player('blue', color(37, 105, 255), boardSize-2, boardSize - 2)];
-    this.turnCount = 0;
-    //this.currentPlayer;
     this.board = new Board(boardSize);
+    this.players = [
+      new Player('purple', color(113, 5, 136), this.board, 1, 1),
+      new Player('blue', color(37, 105, 255), this.board, boardSize-2, boardSize - 2)];
+    this.turnCount = 0;
     this.gameOver = false;
   }
 
@@ -214,22 +233,24 @@ class Match {
     return this.players[this.currentPlayerIndex];
   }
 
-  update() {
-  }
   draw(){
-    //blendMode(ADD)
     this.board.draw();
     for (let player of this.players){
       player.draw();
     }
   }
+
   tryTurn(){
     let cursorPosition = grid.fromCoord(mouseX, mouseY);
+
+    // mouse on current player
     if (this.currentPlayer.column == cursorPosition.column && this.currentPlayer.row == cursorPosition.row ){
       let attack = this.currentPlayer.pop();
       this.board.setMultiple(attack.cells, attack.color);
       this.turnCount++;
     }
+
+    // can move to mouse
     else if (this.currentPlayer.canMove(cursorPosition.column, cursorPosition.row) ) {
       this.currentPlayer.moveTo(cursorPosition.column, cursorPosition.row);
       this.board.set(this.currentPlayer.column, this.currentPlayer.row, this.currentPlayer.color);
@@ -239,16 +260,6 @@ class Match {
 
 }
 ////// INPUT \\\\\\
-// function mouseDown() {
-//   currentMatch.turnComplete = false;
-//   currentMatch.turnInProgress = true;
-// }
-//
-// function mouseUp(){
-//   currentMatch.turnComplete = true;
-//   currentMatch.turnInProgress = false;
-// }
-
 function boardClicked(){
   currentMatch.tryTurn();
 }
@@ -303,6 +314,6 @@ function drawGridSquare(column, row, color = 50){
 
 function drawCursorHighlight(){
   //if currentMatch.currentPlayer.canMove
-  let color = currentMatch.currentPlayer.color;
-  drawGridOutline(mouseX, mouseY, color);
+  let outline = currentMatch.currentPlayer.color;
+  drawGridOutline(mouseX, mouseY, outline);
 }
