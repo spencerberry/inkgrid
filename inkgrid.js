@@ -1,21 +1,52 @@
-const BOARD_SIZE = 9;
+const BOARD_SIZE = 13;
 
 let boardCanvas;
 let currentMatch;
 let grid;
 
 let palette;
+
+function setup() {
+  noCursor();
+  grid = new Grid();
+  currentMatch = new Match(BOARD_SIZE);
+  // boardCanvas = createCanvas(BOARD_SIZE * grid.size, BOARD_SIZE * grid.size);
+  // boardCanvas.parent("board");
+  //grid.setSizeByBoardElement();
+  for (let player of currentMatch.players){
+    console.log(player.name);
+    let attack = player.pop()
+    currentMatch.board.setMultiple(attack.cells, attack.color);
+  }
+  palette = {
+    background: 0,
+    neutral: 30,
+    playerOne: color(113, 5, 136),
+    playerTwo: color(37, 105, 255)
+  }
+}
+
+function draw(){
+  background(palette.background);
+  drawGrid();
+  drawOutline();
+  currentMatch.draw();
+  drawCursorHighlight();
+}
+
+////// GRID \\\\\\\
 let Grid = class Grid {
   constructor(){
-    this.setSizeByWindow();
+    this.setSizeByBoardElement();
   }
 
-  setSizeByWindow(){
-    if (windowWidth < windowHeight) {
-      this.size = windowWidth / BOARD_SIZE;
+  setSizeByBoardElement(){
+    let board = document.getElementById('board');
+    if (board.clientWidth < board.clientHeight) {
+      this.size = board.clientWidth / BOARD_SIZE;
     }
     else {
-      this.size = windowHeight / BOARD_SIZE;
+      this.size = board.clientHeight / BOARD_SIZE;
     }
   }
 
@@ -31,31 +62,6 @@ let Grid = class Grid {
   }
 }
 
-function setup() {
-  noCursor();
-  grid = new Grid();
-  currentMatch = new Match(BOARD_SIZE);
-  boardCanvas = createCanvas(BOARD_SIZE * grid.size, BOARD_SIZE * grid.size);
-  boardCanvas.parent("board");
-  boardCanvas.mouseClicked(boardClicked);
-
-  palette = {
-    background: 0,
-    neutral: 30,
-    playerOne: color(113, 5, 136),
-    playerTwo: color(37, 105, 255)
-  }
-}
-
-function draw(){
-  background(palette.background);
-  drawGrid();
-  drawOutline();
-  currentMatch.draw();
-  drawCursorHighlight();
-
-}
-
 ////// PLAYER \\\\\\
 class Player {
   constructor(name, color, board, column, row) {
@@ -65,47 +71,58 @@ class Player {
     this.column = column;
     this.row = row;
     this.speed = 4;
-    this.swimSpeed = 3;
-    this.range = 4;
+    //this.range = 4;
   }
 
   drawMoves(moves){
     for (let move of moves){
-      let fill = color(10);
-      fill.setAlpha(125);
-      for (let step of move){
-        drawGridSquare(step.column, step.row, fill);
-      }
+      let outline = color(this.color);
+      outline.setAlpha(100);
+      drawCellOutline(move.column, move.row, outline);
     }
   }
 
   possibleMoves(){
     let moves = [];
-    moves[0] = [{column: 0, row: 0}, {column: 1, row: 0}, {column: 2, row: 0}],
-      [{column: 0, row: 0}, {column: 1, row: 0}, {column: 2, row: 0}];
-    let depth = this.speed + this.swimSpeed;
-    for (let move = {depth: 1}; move.depth <= depth; move.depth++){
+    for (let column = -this.speed; column <= this.speed; column++) {
+      let speedLeft = this.speed - Math.abs(column);
+      for (let row = -speedLeft; row <= Math.abs(speedLeft); row++) {
+        let cell = {
+          column: this.column + column,
+          row: this.row + row
+        };
+
+        if (this.board.get(cell.column, cell.row) == this.color){
+          moves.push(cell);
+        }
+      }
     }
     return moves;
   }
 
   draw() {
+    this.drawMoves(this.possibleMoves());
     let top_left = { x: this.column * grid.size, y: this.row * grid.size};
     strokeWeight(grid.sixteenthSize);
     stroke(color(10));
     this.color.setAlpha(255);
     fill(this.color);
     quad(top_left.x + grid.halfSize, top_left.y, top_left.x + grid.size, top_left.y + grid.halfSize, top_left.x + grid.halfSize, top_left.y + grid.size, top_left.x, top_left.y + grid.halfSize);
-    //this.drawMoves(this.possibleMoves());
   }
 
   canMove(column, row) {
-    let columnDistance = column - this.column;
-    let rowDistance = row - this.row;
-    if (Math.abs(columnDistance) + Math.abs(rowDistance) <= this.speed){
+    if (this.possibleMoves().filter(cell => (cell.column == column && cell.row == row)).length > 0){
       return true;
     }
     return false;
+    // console.log();
+    // return (this.possibleMoves().includes({column: column, row: row})[0]);
+    // let columnDistance = column - this.column;
+    // let rowDistance = row - this.row;
+    // if (Math.abs(columnDistance) + Math.abs(rowDistance) <= this.speed){
+    //   return true;
+    // }
+    // return false;
   }
   moveTo(column, row) {
     this.column = column;
@@ -137,19 +154,9 @@ class Player {
   }
 }
 
-// class Turf {
-//   constructor(){
-//     this._turf = ['a','b'];
-//
-//   }
-//   get this(){
-//     return this._turf
-//   }
-//   draw() {};
-// }
-
 class Board {
-  constructor(size, color = (column, row) => undefined) {
+  constructor(match, size, color = (column, row) => undefined) {
+    this.match = match;
     this.size = size;
     this.content = [];
 
@@ -165,10 +172,10 @@ class Board {
   set(column, row, color) {
     if (row >= 0 && row < this.size && column >= 0 && column < this.size) {
       this.content[row * this.size + column] = color;
-      for (let player of currentMatch.players) {
-        if (player != currentMatch.currentPlayer && row == player.row && column == player.column) {
-          currentMatch.gameOver = true;
-          console.log(currentMatch.currentPlayer.name, " wins!");
+      for (let player of this.match.players) {
+        if (player != this.match.currentPlayer && row == player.row && column == player.column) {
+          this.match.gameOver = true;
+          console.log(this.match.currentPlayer.name, " wins!");
         }
       }
     }
@@ -218,12 +225,13 @@ class BoardIterator {
 ////// MATCH \\\\\\
 class Match {
   constructor(boardSize) {
-    this.board = new Board(boardSize);
-    this.players = [
-      new Player('purple', color(113, 5, 136), this.board, 1, 1),
-      new Player('blue', color(37, 105, 255), this.board, boardSize-2, boardSize - 2)];
+    windowResized();
     this.turnCount = 0;
     this.gameOver = false;
+    this.board = new Board(this, boardSize);
+    this.players = [
+      new Player('purple', color(113, 5, 136), this.board, 2, 2),
+      new Player('blue', color(37, 105, 255), this.board, boardSize - 3, boardSize - 3)];
   }
 
   get currentPlayerIndex(){
@@ -235,9 +243,7 @@ class Match {
 
   draw(){
     this.board.draw();
-    for (let player of this.players){
-      player.draw();
-    }
+    this.currentPlayer.draw();
   }
 
   tryTurn(){
@@ -266,9 +272,10 @@ function boardClicked(){
 
 ////// SCALING \\\\\\
 function windowResized(){
-  grid.setSizeByWindow();
+  grid.setSizeByBoardElement();
   let boardCanvas = createCanvas(BOARD_SIZE * grid.size, BOARD_SIZE * grid.size);
   boardCanvas.parent("board");
+  boardCanvas.mouseClicked(boardClicked);
 }
 
 //////  DRAWING \\\\\\
@@ -306,10 +313,17 @@ function drawGridOutline(x, y, color = 50){
   square(cell.column * grid.size, cell.row * grid.size, grid.size);
 }
 
+function drawCellOutline(column, row, color = 50){
+  noFill();
+  stroke(color);
+  strokeWeight(grid.size/16);
+  square(column * grid.size, row * grid.size, grid.size);
+}
+
 function drawGridSquare(column, row, color = 50){
   fill(color);
   noStroke();
-  square(column * grid.size, row * grid.size, grid.size);
+  square(column * grid.size, row * grid.size, grid.size); //temp fix for the gap left between squares
 }
 
 function drawCursorHighlight(){

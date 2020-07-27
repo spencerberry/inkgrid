@@ -2,13 +2,18 @@
   --current-player: #00ff00;
   --dark: #444;
 }
+
+html {
+  height: 100%
+}
 body{
   display: flex;
-  flex-wrap: wrap;
+  flex-grow: 1;
   color: #efe;
-  justify-content: center;
+  justify-content: flex-start;
   margin: 0;
   background-color: #050010;
+  min-height: 100%;
 }
 
 h1, h2 {
@@ -21,11 +26,6 @@ small {
   font-size: .5rem;
 }
 
-canvas{
-  margin: auto;
-  display: block;
-}
-
 ul {
   list-style: none;
   padding-left: 0;
@@ -36,11 +36,15 @@ ul li {
   border-bottom:  .1rem solid var(--dark);
 }
 
+#board {
+  flex-grow: 1;
+  font-size: 0;
+}
+
 #info {
   display: flex;
   flex-direction: column;
   margin: 0 1em;
-  flex-grow: 1;
   flex-basis: 200px;
 }
 
@@ -51,23 +55,7 @@ ul li {
 }
 
 .footnotes {
-  flex-grow: 1;
   font-size: .6em;
   color: var(--dark);
-}
-
-.footnotes li {
-}
-
-
-
-
-
-#board {
-  font-size: 0;
-}
-
-#postboard{
-  text-align: center;
-  align-self: flex-end;
+  margin-bottom: 1em;
 }
