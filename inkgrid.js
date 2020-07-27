@@ -39,7 +39,9 @@ let Grid = class Grid {
   constructor(){
     this.setSizeByBoardElement();
   }
-
+  setSizeByWindow(){
+    this.size = windowHeight / BOARD_SIZE;
+  }
   setSizeByBoardElement(){
     let board = document.getElementById('board');
     if (board.clientWidth < board.clientHeight) {
@@ -272,7 +274,9 @@ function boardClicked(){
 
 ////// SCALING \\\\\\
 function windowResized(){
-  grid.setSizeByBoardElement();
+  console.log('resized')
+  //grid.setSizeByBoardElement();
+  grid.setSizeByWindow();
   let boardCanvas = createCanvas(BOARD_SIZE * grid.size, BOARD_SIZE * grid.size);
   boardCanvas.parent("board");
   boardCanvas.mouseClicked(boardClicked);
