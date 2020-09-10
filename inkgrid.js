@@ -1,4 +1,4 @@
-const BOARD_SIZE = 13;
+const BOARD_SIZE = 8;
 
 let boardCanvas;
 let currentMatch;
@@ -10,14 +10,6 @@ function setup() {
   noCursor();
   grid = new Grid();
   currentMatch = new Match(BOARD_SIZE);
-  // boardCanvas = createCanvas(BOARD_SIZE * grid.size, BOARD_SIZE * grid.size);
-  // boardCanvas.parent("board");
-  //grid.setSizeByBoardElement();
-  for (let player of currentMatch.players){
-    console.log(player.name);
-    let attack = player.pop()
-    currentMatch.board.setMultiple(attack.cells, attack.color);
-  }
   palette = {
     background: 0,
     neutral: 30,
@@ -27,11 +19,19 @@ function setup() {
 }
 
 function draw(){
-  background(palette.background);
-  drawGrid();
-  drawOutline();
-  currentMatch.draw();
-  drawCursorHighlight();
+  if (currentMatch.gameOver) {
+    textSize(72);
+    fill(color('ivory'));
+    text('game over', 200, 200);
+    textSize(48);
+    text(currentMatch.currentPlayer.name + " loses!", 200, 300);
+  } else {
+    background(palette.background);
+    drawGrid();
+    drawOutline();
+    currentMatch.draw();
+    drawCursorHighlight();
+  }
 }
 
 ////// GRID \\\\\\\
@@ -73,7 +73,6 @@ class Player {
     this.column = column;
     this.row = row;
     this.speed = 4;
-    //this.range = 4;
   }
 
   drawMoves(moves){
@@ -117,20 +116,12 @@ class Player {
       return true;
     }
     return false;
-    // console.log();
-    // return (this.possibleMoves().includes({column: column, row: row})[0]);
-    // let columnDistance = column - this.column;
-    // let rowDistance = row - this.row;
-    // if (Math.abs(columnDistance) + Math.abs(rowDistance) <= this.speed){
-    //   return true;
-    // }
-    // return false;
   }
   moveTo(column, row) {
     this.column = column;
     this.row = row;
   }
-  pop(){
+  radialSplash(){
     let cellBatch = []
     let diamond = [
       {column: 0, row: -2},
@@ -173,11 +164,11 @@ class Board {
   }
   set(column, row, color) {
     if (row >= 0 && row < this.size && column >= 0 && column < this.size) {
+      //Within Board
       this.content[row * this.size + column] = color;
       for (let player of this.match.players) {
-        if (player != this.match.currentPlayer && row == player.row && column == player.column) {
+        if (player.color != color && row == player.row && column == player.column) {
           this.match.gameOver = true;
-          console.log(this.match.currentPlayer.name, " wins!");
         }
       }
     }
@@ -234,6 +225,10 @@ class Match {
     this.players = [
       new Player('purple', color(113, 5, 136), this.board, 2, 2),
       new Player('blue', color(37, 105, 255), this.board, boardSize - 3, boardSize - 3)];
+    for (let player of this.players){
+      let attack = player.radialSplash()
+      this.board.setMultiple(attack.cells, attack.color);
+    }
   }
 
   get currentPlayerIndex(){
@@ -253,7 +248,7 @@ class Match {
 
     // mouse on current player
     if (this.currentPlayer.column == cursorPosition.column && this.currentPlayer.row == cursorPosition.row ){
-      let attack = this.currentPlayer.pop();
+      let attack = this.currentPlayer.radialSplash();
       this.board.setMultiple(attack.cells, attack.color);
       this.turnCount++;
     }

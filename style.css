@@ -16,6 +16,14 @@ body{
   min-height: 100%;
 }
 
+button{
+  background-color: ivory;
+  border: none;
+  padding: 8px;
+  font-size: 10px;
+  margin: 10px 0 16px;
+}
+
 h1, h2 {
   margin-top: 0;
   margin-bottom: .5rem;
